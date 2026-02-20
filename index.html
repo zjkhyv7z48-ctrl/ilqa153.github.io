@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>ILQAR153 Ray-Ban ULTRA</title>
+
+<style>
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+font-family:Arial;
+background:#000;
+color:#fff;
+}
+
+/* HEADER */
+
+header{
+background:#0d0d0d;
+padding:18px 35px;
+display:flex;
+justify-content:space-between;
+align-items:center;
+border-bottom:1px solid #222;
+}
+
+.logo{
+color:#ff9900;
+font-weight:bold;
+font-size:22px;
+}
+
+.search{
+padding:8px 12px;
+border-radius:8px;
+border:none;
+}
+
+/* PRODUCTS */
+
+.products{
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+gap:25px;
+padding:30px;
+}
+
+.card{
+background:#111;
+border-radius:15px;
+overflow:hidden;
+transition:.35s;
+box-shadow:0 0 15px rgba(255,153,0,.2);
+}
+
+.card:hover{
+transform:translateY(-10px);
+box-shadow:0 0 35px rgba(255,153,0,.6);
+}
+
+.card img{
+width:100%;
+height:200px;
+}
+
+.card-content{padding:15px}
+
+.price{
+color:#ff9900;
+margin:10px 0;
+font-weight:bold;
+}
+
+.btn{
+background:#ff9900;
+border:none;
+padding:9px 14px;
+border-radius:8px;
+cursor:pointer;
+font-weight:bold;
+}
+
+/* CART */
+
+.cart{
+position:fixed;
+right:20px;
+bottom:20px;
+background:#111;
+padding:20px;
+border-radius:15px;
+width:320px;
+max-height:420px;
+overflow:auto;
+box-shadow:0 0 25px rgba(255,153,0,.4);
+}
+
+.cart-item{
+display:flex;
+justify-content:space-between;
+margin:7px 0;
+cursor:pointer;
+font-size:14px;
+}
+
+.total{
+margin-top:10px;
+color:#ff9900;
+font-weight:bold;
+}
+
+/* MODAL */
+
+.modal{
+position:fixed;
+inset:0;
+background:#000c;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+.box{
+background:#111;
+padding:25px;
+border-radius:14px;
+width:260px;
+}
+
+input{
+width:100%;
+margin:7px 0;
+padding:8px;
+border:none;
+border-radius:6px;
+}
+
+/* ADMIN */
+
+.admin{
+display:none;
+margin:20px;
+padding:20px;
+background:#111;
+border:1px solid #ff9900;
+border-radius:12px;
+}
+
+</style>
+</head>
+
+<body>
+
+<header>
+<div class="logo">🕶 ILQAR153 Ray-Ban</div>
+<input class="search" placeholder="Поиск..." oninput="searchProducts(this.value)">
+</header>
+
+<div id="adminPanel" class="admin">
+<h3>👑 Admin Panel</h3>
+<input id="newName" placeholder="Название">
+<input id="newPrice" placeholder="Цена">
+<button class="btn" onclick="addProduct()">Добавить товар</button>
+</div>
+
+<section id="productList" class="products"></section>
+
+<div class="cart">
+<h3>🛒 Корзина</h3>
+<div id="cartItems"></div>
+<div class="total">Итого: <span id="total">0</span> ₽</div>
+<button class="btn" onclick="checkout()">Оформить</button>
+</div>
+
+<!-- LOGIN -->
+<div class="modal" id="authModal">
+<div class="box">
+<h3>Вход</h3>
+<input id="login" placeholder="Логин">
+<button class="btn" onclick="loginUser()">Войти</button>
+</div>
+</div>
+
+<script>
+
+/* ===== SVG GLASSES (OFFLINE IMAGES) ===== */
+
+function glassesSVG(name,color){
+return `data:image/svg+xml;utf8,
+<svg xmlns='http://www.w3.org/2000/svg' width='400' height='300'>
+<rect width='100%' height='100%' fill='black'/>
+<circle cx='140' cy='150' r='60' fill='#111' stroke='${color}' stroke-width='6'/>
+<circle cx='260' cy='150' r='60' fill='#111' stroke='${color}' stroke-width='6'/>
+<rect x='140' y='140' width='120' height='20' fill='${color}'/>
+<text x='50%' y='90%' fill='white'
+font-size='18'
+text-anchor='middle'>${name}</text>
+</svg>`;
+}
+
+/* ===== PRODUCTS (25 MODELS) ===== */
+
+const baseProducts=[
+"Aviator RB3025","Wayfarer RB2140","Clubmaster RB3016",
+"Round RB3447","Justin RB4165","Erika RB4171",
+"New Wayfarer RB2132","Hexagonal RB3548",
+"Caravan RB3136","Blaze RB3583",
+"Chris RB4187","Jack RB3565",
+"State Street RB2186","Meteor RB2168",
+"Oval RB3547","Boyfriend RB4147",
+"Scuderia Ferrari RB3663","Frank RB3857",
+"Marshal RB3648","Double Bridge RB3647",
+"Blaze Wayfarer RB4440","Round Double RB3647",
+"Clubround RB4246","Balorama RB4089",
+"Predator RB2027"
+];
+
+let products = JSON.parse(localStorage.getItem("products")) ||
+baseProducts.map((n,i)=>({
+name:"Ray-Ban "+n,
+price:9000+Math.floor(Math.random()*7000),
+img:glassesSVG(n.split(" ")[0],["orange","red","gold","cyan","lime"][i%5])
+}));
+
+let cart = JSON.parse(localStorage.getItem("cart")) || [];
+
+/* ===== RENDER ===== */
+
+function renderProducts(list){
+productList.innerHTML="";
+list.forEach((p,i)=>{
+productList.innerHTML+=`
+<div class="card">
+<img src="${p.img}">
+<div class="card-content">
+<h3>${p.name}</h3>
+<div class="price">${p.price} ₽</div>
+<button class="btn" onclick="addToCart(${i})">Купить</button>
+</div>
+</div>`;
+});
+}
+
+function renderCart(){
+cartItems.innerHTML="";
+let total=0;
+
+cart.forEach((c,i)=>{
+total+=c.price;
+cartItems.innerHTML+=`
+<div class="cart-item" onclick="removeItem(${i})">
+${c.name}<span>${c.price} ₽ ❌</span>
+</div>`;
+});
+
+document.getElementById("total").innerText=total;
+localStorage.setItem("cart",JSON.stringify(cart));
+}
+
+/* ===== ACTIONS ===== */
+
+function addToCart(i){
+cart.push(products[i]);
+renderCart();
+}
+
+function removeItem(i){
+cart.splice(i,1);
+renderCart();
+}
+
+function searchProducts(v){
+renderProducts(products.filter(p=>
+p.name.toLowerCase().includes(v.toLowerCase())
+));
+}
+
+function checkout(){
+if(!cart.length) return alert("Корзина пуста");
+alert("✅ Заказ оформлен!");
+cart=[];
+renderCart();
+}
+
+/* ===== ADMIN ===== */
+
+function addProduct(){
+const name=newName.value;
+const price=Number(newPrice.value);
+
+if(!name||!price) return alert("Заполни поля");
+
+products.push({
+name,
+price,
+img:glassesSVG(name,"white")
+});
+
+localStorage.setItem("products",JSON.stringify(products));
+renderProducts(products);
+}
+
+/* ===== AUTH ===== */
+
+function loginUser(){
+const user=document.getElementById("login").value;
+if(!user) return alert("Введите логин");
+
+localStorage.setItem("user",user);
+authModal.style.display="none";
+
+if(user==="Ilqar153"){
+adminPanel.style.display="block";
+}
+}
+
+const savedUser=localStorage.getItem("user");
+if(savedUser){
+authModal.style.display="none";
+if(savedUser==="Ilqar153"){
+adminPanel.style.display="block";
+}
+}
+
+/* INIT */
+
+renderProducts(products);
+renderCart();
+
+</script>
+
+</body>
+</html>
